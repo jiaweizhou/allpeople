@@ -88,7 +88,7 @@ func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
 	defer close(end)
 	select {
 	case <-ch:
-	default:
+		//default:
 		records, numbers, err := c.Getrecords(grabcorn.Id)
 		if err != nil {
 			fmt.Println(err)
@@ -118,7 +118,7 @@ func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
 		form.Add("needed", strconv.Itoa(grabcorn.Needed))
 		form.Add("date", fmt.Sprint(time.Now().Unix()))
 		form.Add("kind", strconv.Itoa(grabcorn.Kind))
-		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcorns/create", form)
+		response, err := http.PostForm("http://localhost/alliance/web/v1/grabcorns/create", form)
 		if err != nil {
 			fmt.Println("kaijiangshibai" + err.Error())
 		} else {

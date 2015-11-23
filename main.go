@@ -13,6 +13,13 @@ var db *sql.DB
 var ch = make(chan int)
 var process = map[int]chan int{}
 
+func test(response http.ResponseWriter, request *http.Request) {
+	request.ParseForm()
+
+	grabcornid := request.Form.Get("grabcornid")
+	fmt.Println("get grabcornid:" + grabcornid)
+	response.Write([]byte(`{'flag':` + grabcornid + `}`))
+}
 func main() {
 	db, err := sql.Open("mysql", "root:@/alliance")
 	if err != nil {
@@ -27,6 +34,7 @@ func main() {
 	commodities := NewCommodities(db)
 	corns.Serve()
 	commodities.Serve()
+	http.HandleFunc("/test", test)
 	http.HandleFunc("/cornopen", corns.Waitforopen)
 	http.HandleFunc("/cornclose", corns.Waitforopen)
 	http.HandleFunc("/commodityopen", commodities.Waitforopen)
