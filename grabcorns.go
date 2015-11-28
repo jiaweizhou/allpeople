@@ -29,6 +29,7 @@ type Grabcorns struct {
 	Winnernumber   int
 	Foruser        int
 	Pictures       string
+	Worth          int
 }
 
 type Grabcornrecords struct {
@@ -61,7 +62,7 @@ func (c *Corns) Waitforopen(response http.ResponseWriter, request *http.Request)
 
 	result, err := c.Getactivity(id)
 	if err != nil {
-		http.Error(response, "{'flag':0}", 500)
+		response.Write([]byte("{'flag':0}"))
 		return
 	}
 	go func() {
@@ -83,7 +84,9 @@ func (c *Corns) Serve() {
 	}
 }
 func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
-	fmt.Println(time.Unix(int64(grabcorn.End_at), 0).Sub(time.Now()).String())
+
+	log.Println("start open title:", grabcorn.Title, " version:", grabcorn.Version)
+	log.Println(time.Unix(int64(grabcorn.End_at), 0).Sub(time.Now()).String())
 	ch := time.Tick(time.Unix(int64(grabcorn.End_at), 0).Sub(time.Now()))
 	defer close(end)
 	select {
@@ -111,20 +114,22 @@ func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
 			fmt.Println("kaijiangshibai" + err.Error())
 		}
 		form := url.Values{}
-		form.Add("picture", "http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/20071224162158623_2.jpg")
-		form.Add("pictures", "http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/20071224162158623_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/2007822154648385_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/2531170_193356481000_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/5528723_101453638160_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/6348-12011120200785.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/8337244_105659585000_2.jpg")
+		form.Add("picture", grabcorn.Picture)
+		form.Add("pictures", grabcorn.Pictures)
 		form.Add("title", grabcorn.Title)
 		form.Add("version", strconv.Itoa(grabcorn.Version+1))
 		form.Add("needed", strconv.Itoa(grabcorn.Needed))
 		form.Add("date", fmt.Sprint(time.Now().Unix()))
 		form.Add("kind", strconv.Itoa(grabcorn.Kind))
-		response, err := http.PostForm("http://localhost/alliance/web/v1/grabcorns/create", form)
+		form.Add("worth", strconv.Itoa(grabcorn.Worth))
+		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcorns/create", form)
 		if err != nil {
-			fmt.Println("kaijiangshibai" + err.Error())
+			log.Println("create grabcorns err:" + err.Error())
 		} else {
 			defer response.Body.Close()
 			tt, _ := ioutil.ReadAll(response.Body)
-			fmt.Println(string(tt))
+			log.Println("create grabcorns:" + string(tt))
+			log.Println("open success")
 		}
 
 	case <-end:
@@ -133,7 +138,7 @@ func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
 }
 func (c *Corns) Getactivities() ([]*Grabcorns, error) {
 	result := []*Grabcorns{}
-	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,title,version,date,needed,end_at,kind from grabcorns where islotteried = 0 and end_at!=0 and foruser=0"))
+	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,title,version,date,needed,end_at,kind,worth from grabcorns where islotteried = 0 and end_at!=0 and foruser=0"))
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +148,11 @@ func (c *Corns) Getactivities() ([]*Grabcorns, error) {
 
 	for rows.Next() {
 		one := &Grabcorns{}
-		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind)
+		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind, &one.Worth)
 		result = append(result, one)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Get Grabcorns err:" + err.Error())
+			return result, err
 		}
 	}
 	return result, nil
@@ -156,6 +162,7 @@ func (c *Corns) Getrecords(id int) ([]*Grabcornrecords, map[string]*Grabcornreco
 	result := []*Grabcornrecords{}
 	rows, err := c.db.Query(fmt.Sprintf("select id,numbers,userid,created_at from grabcornrecords where grabcornid = %d order by grabcornrecords.created_at desc", id))
 	if err != nil {
+		log.Println("Get Grabcornrecords err:" + err.Error())
 		return nil, nil, err
 	}
 	defer rows.Close()
@@ -171,14 +178,15 @@ func (c *Corns) Getrecords(id int) ([]*Grabcornrecords, map[string]*Grabcornreco
 			numbers[v] = one
 		}
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Get Grabcornrecords err:" + err.Error())
+			return nil, nil, err
 		}
 	}
 	return result, numbers, nil
 }
 
 func (c *Corns) Getactivity(id int) (*Grabcorns, error) {
-	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,title,version,date,needed,end_at,kind from grabcorns where id = %d", id))
+	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,title,version,date,needed,end_at,kind,worth from grabcorns where id = %d", id))
 	if err != nil {
 		return nil, err
 	}
@@ -187,9 +195,10 @@ func (c *Corns) Getactivity(id int) (*Grabcorns, error) {
 	//rows, _ := db.Query("select * from grabcommodities")
 
 	for rows.Next() {
-		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind)
+		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind, &one.Worth)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Get Grabcorn:" + err.Error())
+			return nil, err
 		}
 		return one, nil
 	}

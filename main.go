@@ -14,14 +14,14 @@ var ch = make(chan int)
 var process = map[int]chan int{}
 
 func test(response http.ResponseWriter, request *http.Request) {
-	request.ParseForm()
-
-	grabcornid := request.Form.Get("grabcornid")
-	fmt.Println("get grabcornid:" + grabcornid)
-	response.Write([]byte(`{'flag':` + grabcornid + `}`))
+	//request.ParseForm()
+	fmt.Println(request.RemoteAddr)
+	//grabcornid := request.Form.Get("grabcornid")
+	//fmt.Println("get grabcornid:" + grabcornid)
+	response.Write([]byte(`{'flag':` + `}`))
 }
 func main() {
-	db, err := sql.Open("mysql", "root:@/alliance")
+	db, err := sql.Open("mysql", "root:mypassword@tcp(10.10.105.253:3306)/alliance")
 	if err != nil {
 		log.Fatalf("Open database error: %s\n", err)
 	}

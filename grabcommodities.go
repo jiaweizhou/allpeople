@@ -30,6 +30,7 @@ type Grabcommodities struct {
 	Winnernumber   int
 	Foruser        int
 	Pictures       string
+	Worth          int
 }
 
 type Grabcommodityrecords struct {
@@ -56,13 +57,13 @@ func NewCommodities(db *sql.DB) *Commodities {
 func (c *Commodities) Waitforopen(response http.ResponseWriter, request *http.Request) {
 	request.ParseForm()
 
-	grabcornid := request.Form.Get("grabcommodityid")
-	id, err := strconv.Atoi(grabcornid)
-	fmt.Println(grabcornid)
+	grabcommodityid := request.Form.Get("grabcommodityid")
+	id, err := strconv.Atoi(grabcommodityid)
+	fmt.Println(grabcommodityid)
 
 	result, err := c.Getactivity(id)
 	if err != nil {
-		http.Error(response, "{'flag':0}", 500)
+		response.Write([]byte("{'flag':0}"))
 		return
 	}
 	go func() {
@@ -74,7 +75,7 @@ func (c *Commodities) Waitforopen(response http.ResponseWriter, request *http.Re
 func (c *Commodities) Serve() {
 	result, err := c.Getactivities()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("get Getactivities:" + err.Error())
 	}
 	for _, v := range result {
 		go func() {
@@ -84,12 +85,13 @@ func (c *Commodities) Serve() {
 	}
 }
 func (c *Commodities) Open(activity *Grabcommodities, end chan int) {
-	fmt.Println(time.Unix(int64(activity.End_at), 0).Sub(time.Now()).String())
+	log.Println("start open title:", activity.Title, " version:", activity.Version)
+	log.Println(time.Unix(int64(activity.End_at), 0).Sub(time.Now()).String())
+	//fmt.Println(time.Unix(int64(activity.End_at), 0).Sub(time.Now()).String())
 	ch := time.Tick(time.Unix(int64(activity.End_at), 0).Sub(time.Now()))
 	defer close(end)
 	select {
 	case <-ch:
-	default:
 		records, numbers, err := c.Getrecords(activity.Id)
 		if err != nil {
 			fmt.Println(err)
@@ -117,24 +119,24 @@ func (c *Commodities) Open(activity *Grabcommodities, end chan int) {
 		form.Add("needed", strconv.Itoa(activity.Needed))
 		form.Add("date", fmt.Sprint(time.Now().Unix()))
 		form.Add("kind", strconv.Itoa(activity.Kind))
+		form.Add("worth", strconv.Itoa(activity.Worth))
 		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcommodities/create", form)
 		if err != nil {
-			fmt.Println("kaijiangshibai" + err.Error())
+			log.Println("create grabcommodities err:" + err.Error())
 		} else {
 			defer response.Body.Close()
 			tt, _ := ioutil.ReadAll(response.Body)
-			fmt.Println(string(tt))
+			log.Println("create grabcommodities:" + string(tt))
+			log.Println("open success")
 		}
-		if err != nil {
-			fmt.Println("kaijiangshibai" + err.Error())
-		}
+
 	case <-end:
 		return
 	}
 }
 func (c *Commodities) Getactivities() ([]*Grabcommodities, error) {
 	result := []*Grabcommodities{}
-	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,details,title,version,date,needed,end_at,kind from grabcommodities where islotteried = 0 and end_at!=0 and foruser=0"))
+	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,details,title,version,date,needed,end_at,kind,worth from grabcommodities where islotteried = 0 and end_at!=0 and foruser=0"))
 	if err != nil {
 		return nil, err
 	}
@@ -144,10 +146,11 @@ func (c *Commodities) Getactivities() ([]*Grabcommodities, error) {
 
 	for rows.Next() {
 		one := &Grabcommodities{}
-		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Details, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind)
+		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Details, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind, &one.Worth)
 		result = append(result, one)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Get Grabcommodities err:" + err.Error())
+			return result, err
 		}
 	}
 	return result, nil
@@ -157,6 +160,7 @@ func (c *Commodities) Getrecords(id int) ([]*Grabcommodityrecords, map[string]*G
 	result := []*Grabcommodityrecords{}
 	rows, err := c.db.Query(fmt.Sprintf("select id,numbers,userid,created_at from grabcommodityrecords where grabcommodityid = %d order by grabcommodityrecords.created_at desc", id))
 	if err != nil {
+		log.Println("Get Grabcommodityrecords err:" + err.Error())
 		return nil, nil, err
 	}
 	defer rows.Close()
@@ -172,15 +176,17 @@ func (c *Commodities) Getrecords(id int) ([]*Grabcommodityrecords, map[string]*G
 			numbers[v] = one
 		}
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Get Grabcommodityrecords err:" + err.Error())
+			return result, numbers, err
 		}
 	}
 	return result, numbers, nil
 }
 
 func (c *Commodities) Getactivity(id int) (*Grabcommodities, error) {
-	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,,details,title,version,date,needed,end_at,kind from grabcommodities where id = %d", id))
+	rows, err := c.db.Query(fmt.Sprintf("select id,picture,pictures,details,title,version,date,needed,end_at,kind,worth from grabcommodities where id = %d", id))
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -188,9 +194,11 @@ func (c *Commodities) Getactivity(id int) (*Grabcommodities, error) {
 	//rows, _ := db.Query("select * from grabcommodities")
 
 	for rows.Next() {
-		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Details, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind)
+		err := rows.Scan(&one.Id, &one.Picture, &one.Pictures, &one.Details, &one.Title, &one.Version, &one.Date, &one.Needed, &one.End_at, &one.Kind, &one.Worth)
 		if err != nil {
-			log.Fatal(err)
+			//fmt.Println(err)
+			log.Println("Get Grabcommodity:" + err.Error())
+			return nil, err
 		}
 		return one, nil
 	}
