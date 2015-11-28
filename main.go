@@ -21,7 +21,7 @@ func test(response http.ResponseWriter, request *http.Request) {
 	response.Write([]byte(`{'flag':` + `}`))
 }
 func main() {
-	db, err := sql.Open("mysql", "root:mypassword@tcp(10.10.105.253:3306)/alliance")
+	db, err := sql.Open("mysql", "root@/alliance")
 	if err != nil {
 		log.Fatalf("Open database error: %s\n", err)
 	}
@@ -32,6 +32,8 @@ func main() {
 	}
 	corns := NewCorns(db)
 	commodities := NewCommodities(db)
+	//ClearEnvelope(db)
+	log.Println("adfgsdfg")
 	corns.Serve()
 	commodities.Serve()
 	http.HandleFunc("/test", test)
