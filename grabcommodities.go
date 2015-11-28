@@ -76,10 +76,10 @@ func (c *Commodities) Serve() {
 		log.Println("get Getactivities:" + err.Error())
 	}
 	for _, v := range result {
-		go func() {
+		go func(v *Grabcommodities) {
 			c.process[v.Id] = make(chan int)
 			c.Open(v, c.process[v.Id])
-		}()
+		}(v)
 	}
 }
 func (c *Commodities) Open(activity *Grabcommodities, end chan int) {

@@ -75,10 +75,10 @@ func (c *Corns) Serve() {
 		log.Fatal(err)
 	}
 	for _, v := range result {
-		go func() {
+		go func(v *Grabcorns) {
 			c.process[v.Id] = make(chan int)
 			c.Open(v, c.process[v.Id])
-		}()
+		}(v)
 	}
 }
 func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
