@@ -110,25 +110,25 @@ func (c *Commodities) Open(activity *Grabcommodities, end chan int) {
 
 		_, err = c.db.Exec(fmt.Sprintf("update grabcommodities set islotteried=%d,winneruserid=%d,winnerrecordid=%d,winnernumber=%d where id = %d", 1, winnerrecord.Userid, winnerrecord.Id, number, activity.Id))
 		//_, err = c.db.Exec(fmt.Sprintf("insert into grabcommodities(picture,pictures,details,title,version,needed,remain,created_at,date,end_at,islotteried,winneruserid,foruser,kind) select picture,pictures,details,title,version+1,needed,needed,%d,%d,0,0,0,0,kind from grabcorns where id = %d", time.Now().Unix(), time.Now().Unix(), activity.Id))
-		form := url.Values{}
-		form.Add("picture", activity.Picture)   //"http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/20071224162158623_2.jpg")
-		form.Add("pictures", activity.Pictures) //"http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/20071224162158623_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/2007822154648385_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/2531170_193356481000_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/5528723_101453638160_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/6348-12011120200785.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/8337244_105659585000_2.jpg")
-		form.Add("details", activity.Details)
-		form.Add("title", activity.Title)
-		form.Add("version", strconv.Itoa(activity.Version+1))
-		form.Add("needed", strconv.Itoa(activity.Needed))
-		form.Add("date", fmt.Sprint(time.Now().Unix()))
-		form.Add("kind", strconv.Itoa(activity.Kind))
-		form.Add("worth", strconv.Itoa(activity.Worth))
-		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcommodities/create", form)
-		if err != nil {
-			log.Println("create grabcommodities err:" + err.Error())
-		} else {
-			defer response.Body.Close()
-			tt, _ := ioutil.ReadAll(response.Body)
-			log.Println("create grabcommodities:" + string(tt))
-			log.Println("open success")
-		}
+		//		form := url.Values{}
+		//		form.Add("picture", activity.Picture)   //"http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/20071224162158623_2.jpg")
+		//		form.Add("pictures", activity.Pictures) //"http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/20071224162158623_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/2007822154648385_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/2531170_193356481000_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/5528723_101453638160_2.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/6348-12011120200785.jpg http://7xoc8r.com2.z0.glb.qiniucdn.com/corns/8337244_105659585000_2.jpg")
+		//		form.Add("details", activity.Details)
+		//		form.Add("title", activity.Title)
+		//		form.Add("version", strconv.Itoa(activity.Version+1))
+		//		form.Add("needed", strconv.Itoa(activity.Needed))
+		//		form.Add("date", fmt.Sprint(time.Now().Unix()))
+		//		form.Add("kind", strconv.Itoa(activity.Kind))
+		//		form.Add("worth", strconv.Itoa(activity.Worth))
+		//		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcommodities/create", form)
+		//		if err != nil {
+		//			log.Println("create grabcommodities err:" + err.Error())
+		//		} else {
+		//			defer response.Body.Close()
+		//			tt, _ := ioutil.ReadAll(response.Body)
+		//			log.Println("create grabcommodities:" + string(tt))
+		//			log.Println("open success")
+		//		}
 
 	case <-end:
 		return

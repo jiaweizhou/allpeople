@@ -113,24 +113,24 @@ func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
 		if err != nil {
 			fmt.Println("kaijiangshibai" + err.Error())
 		}
-		form := url.Values{}
-		form.Add("picture", grabcorn.Picture)
-		form.Add("pictures", grabcorn.Pictures)
-		form.Add("title", grabcorn.Title)
-		form.Add("version", strconv.Itoa(grabcorn.Version+1))
-		form.Add("needed", strconv.Itoa(grabcorn.Needed))
-		form.Add("date", fmt.Sprint(time.Now().Unix()))
-		form.Add("kind", strconv.Itoa(grabcorn.Kind))
-		form.Add("worth", strconv.Itoa(grabcorn.Worth))
-		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcorns/create", form)
-		if err != nil {
-			log.Println("create grabcorns err:" + err.Error())
-		} else {
-			defer response.Body.Close()
-			tt, _ := ioutil.ReadAll(response.Body)
-			log.Println("create grabcorns:" + string(tt))
-			log.Println("open success")
-		}
+		//		form := url.Values{}
+		//		form.Add("picture", grabcorn.Picture)
+		//		form.Add("pictures", grabcorn.Pictures)
+		//		form.Add("title", grabcorn.Title)
+		//		form.Add("version", strconv.Itoa(grabcorn.Version+1))
+		//		form.Add("needed", strconv.Itoa(grabcorn.Needed))
+		//		form.Add("date", fmt.Sprint(time.Now().Unix()))
+		//		form.Add("kind", strconv.Itoa(grabcorn.Kind))
+		//		form.Add("worth", strconv.Itoa(grabcorn.Worth))
+		//		response, err := http.PostForm("http://183.129.190.82:50001/v1/grabcorns/create", form)
+		//		if err != nil {
+		//			log.Println("create grabcorns err:" + err.Error())
+		//		} else {
+		//			defer response.Body.Close()
+		//			tt, _ := ioutil.ReadAll(response.Body)
+		//			log.Println("create grabcorns:" + string(tt))
+		//			log.Println("open success")
+		//		}
 
 	case <-end:
 		return
