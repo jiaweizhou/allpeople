@@ -37,7 +37,7 @@ type Grabcornrecords struct {
 	Count      int
 	Numbers    string
 	Type       int
-	Created_at int
+	Created_at float64
 }
 
 type Corns struct {
@@ -99,12 +99,12 @@ func (c *Corns) Open(grabcorn *Grabcorns, end chan int) {
 		if len(records) < 50 {
 			times = len(records)
 		}
-		total := 0
+		var total int64 = 0
 		for i := 0; i < times; i++ {
-			total += records[i].Created_at
+			total += int64(records[i].Created_at)
 		}
-		number := total%grabcorn.Needed + 10000001
-		winnerrecord := numbers[strconv.Itoa(number)]
+		number := total%int64(grabcorn.Needed) + 10000001
+		winnerrecord := numbers[strconv.FormatInt(number, 10)]
 
 		_, err = c.db.Exec(fmt.Sprintf("update grabcorns set islotteried=%d,winneruserid=%d,winnerrecordid=%d,winnernumber=%d where id = %d", 1, winnerrecord.Userid, winnerrecord.Id, number, grabcorn.Id))
 		//_, err = c.db.Exec(fmt.Sprintf("insert into grabcorns(picture,pictures,title,version,needed,remain,created_at,date,end_at,islotteried,winneruserid,foruser,kind) select picture,pictures,title,version+1,needed,needed,%d,%d,0,0,0,0,kind from grabcorns where id = %d", time.Now().Unix(), time.Now().Unix(), grabcorn.Id))

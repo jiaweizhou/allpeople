@@ -32,7 +32,7 @@ func main() {
 	}
 	corns := NewCorns(db)
 	commodities := NewCommodities(db)
-	//ClearEnvelope(db)
+	ClearEnvelope(db)
 	log.Println("adfgsdfg")
 	corns.Serve()
 	commodities.Serve()
